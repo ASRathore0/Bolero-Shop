@@ -18,6 +18,7 @@ interface AppContextType {
   barbers: User[];
   services: Service[];
   notifications: Notification[];
+  gallery: string[];
   theme: 'light' | 'dark';
   login: (role: UserRole) => void;
   logout: () => void;
@@ -28,30 +29,28 @@ interface AppContextType {
   toggleTheme: () => void;
   toggleBarberDayOff: (barberId: string, date: string) => void;
   addService: (service: Omit<Service, 'id'>) => void;
+  deleteService: (id: string) => void;
+  addBarber: (barber: Omit<User, 'id' | 'role' | 'earnings' | 'rating'>) => void;
+  deleteBarber: (id: string) => void;
+  addToGallery: (url: string) => void;
+  removeFromGallery: (index: number) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const INITIAL_BOOKINGS: Booking[] = [
-  {
-    id: 'bk-1',
-    customerId: 'u1',
-    barberId: 'b1',
-    serviceId: 's1',
-    date: new Date().toISOString().split('T')[0],
-    timeSlot: '11:00 AM',
-    status: BookingStatus.CONFIRMED,
-    totalPrice: 35,
-    createdAt: new Date().toISOString()
-  }
-];
-
 const STORAGE_KEY_BARBERS = 'barberflow_barbers_v1';
 const STORAGE_KEY_SERVICES = 'barberflow_services_v1';
+const STORAGE_KEY_GALLERY = 'barberflow_gallery_v1';
+
+const DEFAULT_GALLERY = [
+  'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=1000',
+  'https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&q=80&w=1000',
+  'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=1000'
+];
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [barbers, setBarbers] = useState<User[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(STORAGE_KEY_BARBERS);
@@ -63,7 +62,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
       }
     }
-    // Default fallback: ensures offDays is initialized for all barbers
     return BARBERS.map(b => ({ ...b, offDays: b.offDays || [] }));
   });
   
@@ -80,6 +78,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     return SERVICES;
   });
+
+  const [gallery, setGallery] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY_GALLERY);
+      if (saved) return JSON.parse(saved);
+    }
+    return DEFAULT_GALLERY;
+  });
   
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -90,7 +96,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return 'light';
   });
 
-  // Effect: Handle Document Theme and LocalStorage
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -100,51 +105,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Effect: Persist Barbers Database
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_BARBERS, JSON.stringify(barbers));
   }, [barbers]);
 
-  // Effect: Persist Services Database
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_SERVICES, JSON.stringify(services));
   }, [services]);
 
-  // Effect: Sync Active Session with Barbers Database
-  // This ensures that when a barber updates their profile/offDays, 
-  // the 'currentUser' state (the logged in session) is updated immediately.
   useEffect(() => {
-    if (currentUser && currentUser.role === UserRole.BARBER) {
-      const updatedBarberData = barbers.find(b => b.id === currentUser.id);
-      if (updatedBarberData) {
-        // Only update if data has actually changed to prevent infinite loops
-        const currentOffDays = JSON.stringify(currentUser.offDays || []);
-        const newOffDays = JSON.stringify(updatedBarberData.offDays || []);
-        
-        if (currentOffDays !== newOffDays) {
-          setCurrentUser({ ...currentUser, ...updatedBarberData });
-        }
-      }
-    }
-  }, [barbers, currentUser]);
+    localStorage.setItem(STORAGE_KEY_GALLERY, JSON.stringify(gallery));
+  }, [gallery]);
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   const login = (role: UserRole) => {
-    // For demo: automatically log in as the first barber 'b1' if BARBER role is selected
-    const barberSource = barbers.find(b => b.id === 'b1');
-    
-    const mockUser: User = {
-      id: role === UserRole.BARBER ? 'b1' : (role === UserRole.ADMIN ? 'admin-1' : 'u1'),
-      name: role === UserRole.BARBER ? barberSource?.name || 'Marco Rossi' : (role === UserRole.ADMIN ? 'Salon Manager' : 'Alex Customer'),
-      email: `${role.toLowerCase()}@example.com`,
-      role,
-      avatar: role === UserRole.BARBER ? barberSource?.avatar || '' : `https://picsum.photos/seed/${role}/200`,
-      specialties: role === UserRole.BARBER ? barberSource?.specialties : undefined,
-      rating: role === UserRole.BARBER ? barberSource?.rating : undefined,
-      earnings: role === UserRole.BARBER ? barberSource?.earnings : undefined,
-      offDays: role === UserRole.BARBER ? barberSource?.offDays || [] : [],
-    };
+    let mockUser: User;
+    if (role === UserRole.BARBER) {
+      const b = barbers[0] || BARBERS[0];
+      mockUser = { ...b, role: UserRole.BARBER };
+    } else if (role === UserRole.ADMIN) {
+      mockUser = {
+        id: 'admin-1',
+        name: 'Salon Owner',
+        email: 'admin@barberflow.com',
+        role: UserRole.ADMIN,
+        avatar: 'https://picsum.photos/seed/admin/200'
+      };
+    } else {
+      mockUser = {
+        id: 'u1',
+        name: 'Alex Customer',
+        email: 'alex@example.com',
+        role: UserRole.CUSTOMER,
+        avatar: 'https://picsum.photos/seed/customer/200'
+      };
+    }
     setCurrentUser(mockUser);
   };
 
@@ -173,7 +169,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const newOffDays = offDays.includes(date) 
           ? offDays.filter(d => d !== date)
           : [...offDays, date];
-        
         return { ...b, offDays: newOffDays };
       }
       return b;
@@ -182,11 +177,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addBooking = (newBooking: Omit<Booking, 'id' | 'createdAt' | 'status'>): boolean => {
     const barber = barbers.find(b => b.id === newBooking.barberId);
-    
-    // Strict check: Prevent double booking or booking on off-days
-    if (barber?.offDays?.includes(newBooking.date)) {
-      return false;
-    }
+    if (barber?.offDays?.includes(newBooking.date)) return false;
 
     const isTaken = bookings.some(b => 
       b.barberId === newBooking.barberId && 
@@ -212,13 +203,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateBookingStatus = (id: string, status: BookingStatus) => {
     const booking = bookings.find(b => b.id === id);
     if (!booking) return;
-
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
     
     if (status === BookingStatus.CONFIRMED) {
-      addNotification(booking.customerId, `BarberFlow: Your booking for ${booking.timeSlot} on ${booking.date} is CONFIRMED! See you then.`, 'success');
-    } else if (status === BookingStatus.CANCELLED) {
-      addNotification(booking.customerId, `BarberFlow Alert: Your booking for ${booking.timeSlot} on ${booking.date} was cancelled.`, 'warning');
+      addNotification(booking.customerId, `Your booking for ${booking.timeSlot} on ${booking.date} is CONFIRMED!`, 'success');
     }
   };
 
@@ -228,7 +216,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       id: `s-${Math.random().toString(36).substr(2, 9)}`,
     };
     setServices(prev => [...prev, service]);
-    addNotification('admin-1', `New service "${newService.name}" added to the salon menu.`, 'success');
+  };
+
+  const deleteService = (id: string) => {
+    setServices(prev => prev.filter(s => s.id !== id));
+  };
+
+  const addBarber = (newBarber: Omit<User, 'id' | 'role' | 'earnings' | 'rating'>) => {
+    const barber: User = {
+      ...newBarber,
+      id: `b-${Math.random().toString(36).substr(2, 9)}`,
+      role: UserRole.BARBER,
+      earnings: 0,
+      rating: 5.0,
+      offDays: []
+    };
+    setBarbers(prev => [...prev, barber]);
+  };
+
+  const deleteBarber = (id: string) => {
+    setBarbers(prev => prev.filter(b => b.id !== id));
+  };
+
+  const addToGallery = (url: string) => {
+    setGallery(prev => [...prev, url]);
+  };
+
+  const removeFromGallery = (index: number) => {
+    setGallery(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -238,6 +253,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       barbers,
       services,
       notifications,
+      gallery,
       theme,
       login,
       logout,
@@ -247,7 +263,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       markNotificationsAsRead,
       toggleTheme,
       toggleBarberDayOff,
-      addService
+      addService,
+      deleteService,
+      addBarber,
+      deleteBarber,
+      addToGallery,
+      removeFromGallery
     }}>
       {children}
     </AppContext.Provider>
