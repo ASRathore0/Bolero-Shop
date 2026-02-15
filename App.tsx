@@ -47,21 +47,21 @@ const Main: React.FC = () => {
           {view === 'booking' ? (
             <div className="max-w-7xl mx-auto px-4">
               <div className="mb-12 text-center">
-                <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">Book Your Session</h1>
-                <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Complete the four steps below to secure your spot with one of our master barbers.</p>
+                <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4 tracking-tighter font-playfair">Book Your Session</h1>
+                <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium">Complete the four steps below to secure your spot with one of our master barbers.</p>
               </div>
-              <BookingFlow />
+              <BookingFlow onComplete={() => setView('home')} />
               <div className="mt-12 text-center">
-                <button onClick={() => setView('home')} className="text-slate-400 dark:text-slate-600 font-bold hover:text-indigo-600 dark:hover:text-indigo-400 transition underline underline-offset-4">Return to my dashboard</button>
+                <button onClick={() => setView('home')} className="text-slate-400 dark:text-slate-600 font-bold hover:text-indigo-600 dark:hover:text-indigo-400 transition underline underline-offset-4 decoration-2">Return to my dashboard</button>
               </div>
             </div>
           ) : (
             <>
               <CustomerDashboard onBookNew={() => setView('booking')} />
-              <div className="fixed bottom-8 right-8 animate-bounce">
+              <div className="fixed bottom-8 right-8 animate-bounce z-40">
                 <button 
                   onClick={() => setView('booking')}
-                  className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-2xl shadow-indigo-400 dark:shadow-none hover:bg-indigo-700 transition"
+                  className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-indigo-600/40 hover:bg-indigo-700 transition"
                 >
                   Book Now
                 </button>

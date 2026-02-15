@@ -104,7 +104,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
           <DollarSign className="text-indigo-600 mb-4" size={24} />
           <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Monthly Gross</div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white">$24,450</div>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">₹24,450</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
           <Users className="text-blue-500 mb-4" size={24} />
@@ -139,7 +139,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex-grow">
                   <h3 className="font-black text-slate-900 dark:text-white text-lg">{barber.name}</h3>
                   <div className="flex items-center gap-1.5 text-amber-500 font-black text-xs">
-                    <Star size={12} className="fill-amber-500" />
+                    <Star size={12} className="fill-amber-400" />
                     {barber.rating}
                   </div>
                 </div>
@@ -203,7 +203,7 @@ export const AdminDashboard: React.FC = () => {
               >
                 <X size={16} />
               </button>
-              <div className="text-2xl font-black text-indigo-600 mb-1">${service.price}</div>
+              <div className="text-2xl font-black text-indigo-600 mb-1">₹{service.price}</div>
               <h3 className="font-black text-slate-900 dark:text-white mb-3 text-lg leading-tight">{service.name}</h3>
               <p className="text-xs text-slate-400 font-medium mb-4 line-clamp-2">{service.description}</p>
               <div className="text-[10px] font-black uppercase tracking-widest text-slate-300 flex items-center gap-1.5">
@@ -244,7 +244,7 @@ export const AdminDashboard: React.FC = () => {
                   <input required type="text" value={newService.name} onChange={e => setNewService({...newService, name: e.target.value})} className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white text-sm" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Price ($)</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Price (₹)</label>
                   <input required type="number" value={newService.price} onChange={e => setNewService({...newService, price: Number(e.target.value)})} className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white text-sm" />
                 </div>
               </div>

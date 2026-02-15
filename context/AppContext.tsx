@@ -34,6 +34,8 @@ interface AppContextType {
   deleteBarber: (id: string) => void;
   addToGallery: (url: string) => void;
   removeFromGallery: (index: number) => void;
+  updateProfile: (updates: Partial<User>) => void;
+  rateBarber: (bookingId: string, rating: number) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -41,6 +43,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const STORAGE_KEY_BARBERS = 'barberflow_barbers_v1';
 const STORAGE_KEY_SERVICES = 'barberflow_services_v1';
 const STORAGE_KEY_GALLERY = 'barberflow_gallery_v1';
+const STORAGE_KEY_BOOKINGS = 'barberflow_bookings_v1';
 
 const DEFAULT_GALLERY = [
   'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=1000',
@@ -50,7 +53,13 @@ const DEFAULT_GALLERY = [
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY_BOOKINGS);
+      if (saved) return JSON.parse(saved);
+    }
+    return [];
+  });
   const [barbers, setBarbers] = useState<User[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(STORAGE_KEY_BARBERS);
@@ -117,6 +126,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.setItem(STORAGE_KEY_GALLERY, JSON.stringify(gallery));
   }, [gallery]);
 
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(bookings));
+  }, [bookings]);
+
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   const login = (role: UserRole) => {
@@ -163,16 +176,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const toggleBarberDayOff = (barberId: string, date: string) => {
+    let updatedUser: User | null = null;
+    
     setBarbers(prev => prev.map(b => {
       if (b.id === barberId) {
         const offDays = b.offDays || [];
         const newOffDays = offDays.includes(date) 
           ? offDays.filter(d => d !== date)
           : [...offDays, date];
-        return { ...b, offDays: newOffDays };
+        const updated = { ...b, offDays: newOffDays };
+        if (currentUser && currentUser.id === barberId) {
+          updatedUser = updated;
+        }
+        return updated;
       }
       return b;
     }));
+
+    if (updatedUser) {
+      setCurrentUser(updatedUser);
+    }
   };
 
   const addBooking = (newBooking: Omit<Booking, 'id' | 'createdAt' | 'status'>): boolean => {
@@ -208,6 +231,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (status === BookingStatus.CONFIRMED) {
       addNotification(booking.customerId, `Your booking for ${booking.timeSlot} on ${booking.date} is CONFIRMED!`, 'success');
     }
+  };
+
+  const rateBarber = (bookingId: string, rating: number) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking || booking.status !== BookingStatus.COMPLETED) return;
+
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, rating } : b));
+
+    // Update barber average rating
+    setBarbers(prev => prev.map(barber => {
+      if (barber.id === booking.barberId) {
+        const barberBookings = bookings.filter(b => b.barberId === barber.id && b.rating);
+        const allRatings = [...barberBookings.map(b => b.rating!), rating];
+        const newAvg = allRatings.reduce((acc, curr) => acc + curr, 0) / allRatings.length;
+        return { ...barber, rating: Number(newAvg.toFixed(1)) };
+      }
+      return barber;
+    }));
   };
 
   const addService = (newService: Omit<Service, 'id'>) => {
@@ -246,6 +287,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setGallery(prev => prev.filter((_, i) => i !== index));
   };
 
+  const updateProfile = (updates: Partial<User>) => {
+    if (!currentUser) return;
+    const updatedUser = { ...currentUser, ...updates };
+    setCurrentUser(updatedUser);
+    
+    // Also update in barbers list if it's a barber
+    if (currentUser.role === UserRole.BARBER) {
+      setBarbers(prev => prev.map(b => b.id === currentUser.id ? updatedUser : b));
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       currentUser,
@@ -268,7 +320,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addBarber,
       deleteBarber,
       addToGallery,
-      removeFromGallery
+      removeFromGallery,
+      updateProfile,
+      rateBarber
     }}>
       {children}
     </AppContext.Provider>

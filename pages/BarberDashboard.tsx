@@ -23,7 +23,9 @@ import {
   ChevronRight,
   BellRing,
   Lock,
-  CalendarX
+  CalendarX,
+  Camera,
+  Upload
 } from 'lucide-react';
 import { BookingStatus } from '../types.ts';
 import { TIME_SLOTS } from '../constants.tsx';
@@ -39,11 +41,19 @@ const MOCK_DATA = [
 ];
 
 export const BarberDashboard: React.FC = () => {
-  const { bookings, services, currentUser, updateBookingStatus, theme, toggleBarberDayOff } = useApp();
+  const { bookings, services, currentUser, updateBookingStatus, theme, toggleBarberDayOff, updateProfile } = useApp();
   const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
   const [toast, setToast] = useState<{ message: string; show: boolean; sub?: string }>({ message: '', show: false });
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [justConfirmedId, setJustConfirmedId] = useState<string | null>(null);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [editProfileData, setEditProfileData] = useState({
+    name: currentUser?.name || '',
+    specialties: currentUser?.specialties?.join(', ') || '',
+    avatar: currentUser?.avatar || ''
+  });
   
   const agendaRef = useRef<HTMLElement>(null);
   const myBookings = bookings.filter(b => b.barberId === currentUser?.id);
@@ -95,6 +105,32 @@ export const BarberDashboard: React.FC = () => {
     });
   };
 
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditProfileData(prev => ({ ...prev, avatar: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfileSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfile({
+      name: editProfileData.name,
+      specialties: editProfileData.specialties.split(',').map(s => s.trim()).filter(s => s !== ''),
+      avatar: editProfileData.avatar
+    });
+    setIsEditingProfile(false);
+    setToast({
+      message: "Profile Updated",
+      sub: "Changes saved to your public artisan card.",
+      show: true
+    });
+  };
+
   const calendarDays = useMemo(() => {
     const days = [];
     const today = new Date();
@@ -123,7 +159,7 @@ export const BarberDashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12 transition-colors duration-300 relative">
-      {/* Toast - Optimized for Mobile */}
+      {/* Toast */}
       {toast.show && (
         <div className="fixed bottom-4 sm:bottom-8 left-4 right-4 sm:left-auto sm:right-8 z-[100] animate-in slide-in-from-bottom-8 fade-in duration-500">
           <div className="bg-slate-900/95 dark:bg-white/95 backdrop-blur-md text-white dark:text-slate-900 px-5 py-4 rounded-2xl sm:rounded-[2rem] shadow-2xl flex items-center space-x-4 border border-slate-800 dark:border-slate-200 min-w-0 sm:min-w-[320px] overflow-hidden">
@@ -141,7 +177,7 @@ export const BarberDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Profile Card - Mobile Optimized (Stacks Vertical) */}
+      {/* Profile Card */}
       <div className="mb-8 sm:mb-12 relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 blur-3xl -z-10 rounded-[3rem]"></div>
         <div className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden">
@@ -175,7 +211,10 @@ export const BarberDashboard: React.FC = () => {
                       </h1>
                       <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Master Artisan</p>
                     </div>
-                    <button className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-bold shadow-lg hover:bg-indigo-700 active:scale-95 transition">
+                    <button 
+                      onClick={() => setIsEditingProfile(true)}
+                      className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-bold shadow-lg hover:bg-indigo-700 active:scale-95 transition"
+                    >
                       Edit Profile
                     </button>
                   </div>
@@ -208,14 +247,14 @@ export const BarberDashboard: React.FC = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
         <StatCard title="Today" value={myBookings.filter(b => b.date === new Date().toISOString().split('T')[0]).length} sub="Scheduled sessions" icon={Clock} color="bg-indigo-600" />
-        <StatCard title="Sales" value={`$${currentUser?.earnings || 0}`} sub="Total revenue" icon={DollarSign} color="bg-green-500" />
+        <StatCard title="Sales" value={`₹${currentUser?.earnings || 0}`} sub="Total revenue" icon={DollarSign} color="bg-green-500" />
         <StatCard title="Clients" value="142" sub="Unique visitors" icon={Users} color="bg-blue-500" />
         <StatCard title="Score" value={currentUser?.rating || "4.9"} sub="Client satisfaction" icon={Star} color="bg-amber-500" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          {/* Calendar - Tightened for Mobile */}
+          {/* Calendar */}
           <section className="bg-white dark:bg-slate-900 p-4 sm:p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
               <CalendarIcon className="mr-2 text-indigo-600" size={18} />
@@ -251,45 +290,51 @@ export const BarberDashboard: React.FC = () => {
           {/* Agenda */}
           <section id="daily-agenda" ref={agendaRef} className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm scroll-mt-24">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl text-white ${isDayOff ? 'bg-rose-500' : 'bg-indigo-600'}`}>
-                  {isDayOff ? <CalendarX size={20} /> : <CalendarIcon size={20} />}
+              <div className="flex items-center gap-4">
+                <div className={`p-4 rounded-[1.2rem] text-white shadow-lg ${isDayOff ? 'bg-rose-500' : 'bg-indigo-600 shadow-indigo-500/20'}`}>
+                  {isDayOff ? <CalendarX size={24} /> : <CalendarIcon size={24} />}
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-900 dark:text-white">Daily Agenda</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Date(viewDate).toLocaleDateString('en-US', { dateStyle: 'medium' })}</p>
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Daily Agenda</h2>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{new Date(viewDate).toLocaleDateString('en-US', { dateStyle: 'long' })}</p>
                 </div>
               </div>
               <button 
                 onClick={handleToggleDayOff}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${isDayOff ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`}
+                className={`flex items-center gap-4 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] transition-all hover:scale-105 active:scale-95 ${isDayOff ? 'bg-rose-500/10 text-rose-500 ring-1 ring-rose-500/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
               >
                 {isDayOff ? 'Rest Day Active' : 'Set Rest Day'}
-                {isDayOff ? <ToggleRight size={24} className="text-rose-500" /> : <ToggleLeft size={24} />}
+                {isDayOff ? <ToggleRight size={28} className="text-rose-500" /> : <ToggleLeft size={28} className="opacity-50" />}
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {TIME_SLOTS.map((slot) => {
                 const booking = dayBookings.find(b => b.timeSlot === slot && b.status !== BookingStatus.CANCELLED);
                 const service = booking ? getService(booking.serviceId) : null;
                 return (
-                  <div key={slot} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${booking ? 'bg-indigo-50/30 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-900' : 'bg-slate-50/50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 opacity-60'}`}>
-                    <div className="flex items-center gap-4">
-                      <span className="text-[10px] sm:text-xs font-black text-slate-500 w-16 sm:w-20">{slot}</span>
+                  <div key={slot} className={`flex items-center justify-between p-5 rounded-3xl border transition-all ${booking ? 'bg-indigo-50/40 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-900 shadow-sm' : 'bg-slate-50/40 dark:bg-slate-950/40 border-slate-100 dark:border-slate-800/60 opacity-60 hover:opacity-100 hover:border-slate-200 dark:hover:border-slate-700'}`}>
+                    <div className="flex items-center gap-6">
+                      <span className="text-[11px] sm:text-xs font-black text-slate-400 dark:text-slate-500 w-20 tracking-widest">{slot}</span>
                       {booking ? (
                         <div>
-                          <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight">{service?.name}</p>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Conf. Required</p>
+                          <p className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">{service?.name}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                             <div className={`w-1.5 h-1.5 rounded-full ${booking.status === BookingStatus.CONFIRMED ? 'bg-green-500' : 'bg-amber-500 animate-pulse'}`}></div>
+                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{booking.status === BookingStatus.CONFIRMED ? 'Confirmed' : 'Pending Review'}</p>
+                          </div>
                         </div>
                       ) : (
-                        <span className="text-[9px] font-black text-slate-300 uppercase italic">Vacant</span>
+                        <div className="flex items-center gap-2">
+                           <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                           <span className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase italic tracking-widest">Available</span>
+                        </div>
                       )}
                     </div>
                     {booking && booking.status === BookingStatus.PENDING && (
                       <button 
                         onClick={() => handleConfirm(booking.id, 'Client')}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition"
+                        className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 active:scale-95 transition-all hover:bg-indigo-700"
                       >
                         Approve
                       </button>
@@ -301,20 +346,112 @@ export const BarberDashboard: React.FC = () => {
           </section>
         </div>
 
-        {/* Desktop Sidebar (Optional/Secondary on Mobile) */}
         <div className="space-y-8">
-          <section className="bg-slate-900 p-8 rounded-[2rem] text-white">
-            <h3 className="text-lg font-black mb-6 flex items-center gap-2">
+          <section className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-900/10 border border-slate-800">
+            <h3 className="text-lg font-black mb-8 flex items-center gap-3">
               <Sparkles size={20} className="text-indigo-400" />
               Barber Insights
             </h3>
-            <div className="bg-white/10 p-4 rounded-2xl border border-white/10">
-              <p className="text-[9px] font-black text-indigo-400 uppercase mb-2">Trend Report</p>
-              <p className="text-xs text-slate-300 leading-relaxed font-medium">Friday slots are 90% full. Expect a busy shift with high referral potential.</p>
+            <div className="space-y-6">
+              <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Peak Times</p>
+                <p className="text-sm text-slate-300 leading-relaxed font-medium">Friday slots are 90% full. Expect a high-volume session with recurring clients.</p>
+              </div>
+              <div className="bg-indigo-600/10 p-6 rounded-3xl border border-indigo-500/20">
+                <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-3">Goal Progress</p>
+                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden mb-2">
+                  <div className="h-full bg-indigo-400 rounded-full w-[78%]"></div>
+                </div>
+                <p className="text-[10px] text-slate-400 font-bold">78% of monthly target reached</p>
+              </div>
             </div>
           </section>
         </div>
       </div>
+
+      {/* EDIT PROFILE MODAL */}
+      {isEditingProfile && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-lg" onClick={() => setIsEditingProfile(false)}></div>
+          <div className="relative bg-[#0f172a] w-full max-w-xl rounded-[2rem] shadow-2xl p-10 border border-slate-800">
+            <h2 className="text-3xl font-bold text-white mb-10 font-playfair tracking-tight">Edit Your Profile</h2>
+            <form onSubmit={handleProfileSave} className="space-y-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Display Name</label>
+                <input 
+                  required 
+                  type="text" 
+                  value={editProfileData.name} 
+                  onChange={e => setEditProfileData({...editProfileData, name: e.target.value})} 
+                  className="w-full px-6 py-4 bg-[#1e293b] border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-base" 
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Profile Avatar</label>
+                <div className="flex items-center gap-4">
+                  <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                    <img 
+                      src={editProfileData.avatar} 
+                      className="w-20 h-20 rounded-2xl object-cover ring-2 ring-slate-700 group-hover:ring-indigo-500 transition-all shadow-xl" 
+                      alt="Avatar Preview" 
+                    />
+                    <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                      <Camera size={20} />
+                    </div>
+                  </div>
+                  <div className="flex-grow">
+                    <input 
+                      type="file" 
+                      ref={fileInputRef}
+                      onChange={handleAvatarUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-2 px-5 py-3 bg-[#1e293b] text-slate-300 border border-slate-700 rounded-xl text-xs font-bold hover:bg-slate-700 transition"
+                    >
+                      <Upload size={14} />
+                      Upload Photo
+                    </button>
+                    <p className="text-[9px] text-slate-500 mt-2 font-medium">Headshot recommended (min 400x400px)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Specialties (comma separated)</label>
+                <input 
+                  required 
+                  type="text" 
+                  placeholder="Skin Fades, Beard Art, Shaves" 
+                  value={editProfileData.specialties} 
+                  onChange={e => setEditProfileData({...editProfileData, specialties: e.target.value})} 
+                  className="w-full px-6 py-4 bg-[#1e293b] border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-base" 
+                />
+              </div>
+              
+              <div className="flex gap-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditingProfile(false)}
+                  className="flex-1 py-5 bg-slate-800 text-slate-300 rounded-2xl font-black text-sm uppercase tracking-[0.1em] hover:bg-slate-700 transition"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="flex-[2] py-5 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-[0.1em] hover:bg-indigo-500 transition shadow-xl shadow-indigo-600/20 active:scale-[0.98]"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -6,7 +6,11 @@ import { SERVICES, BARBERS, TIME_SLOTS } from '../constants';
 import { BookingStatus, Service, User as UserType } from '../types';
 import { getStyleAdvice } from '../services/geminiService';
 
-export const BookingFlow: React.FC = () => {
+interface BookingFlowProps {
+  onComplete: () => void;
+}
+
+export const BookingFlow: React.FC<BookingFlowProps> = ({ onComplete }) => {
   const { addBooking, currentUser, bookings } = useApp();
   const [step, setStep] = useState(1);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -46,15 +50,15 @@ export const BookingFlow: React.FC = () => {
 
   if (isSuccess) {
     return (
-      <div className="text-center py-12 px-6">
-        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle size={32} />
+      <div className="text-center py-12 px-6 animate-in fade-in zoom-in duration-500">
+        <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-500/10">
+          <CheckCircle size={40} />
         </div>
-        <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Appointment Booked!</h3>
-        <p className="text-slate-500 dark:text-slate-400 mb-8">We've sent a confirmation message to your registered contact.</p>
+        <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight font-playfair">Appointment Booked!</h3>
+        <p className="text-slate-500 dark:text-slate-400 mb-10 max-w-sm mx-auto font-medium">We've sent a confirmation message to your registered contact.</p>
         <button 
-          onClick={() => window.location.reload()}
-          className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20"
+          onClick={onComplete}
+          className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition shadow-2xl shadow-indigo-600/30 active:scale-[0.98]"
         >
           View Bookings
         </button>
@@ -93,7 +97,7 @@ export const BookingFlow: React.FC = () => {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-bold text-slate-900 dark:text-white text-base sm:text-lg">{s.name}</span>
-                    <span className="font-bold text-indigo-600 dark:text-indigo-400">${s.price}</span>
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400">₹{s.price}</span>
                   </div>
                   <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-4 leading-relaxed line-clamp-2">{s.description}</p>
                   <div className="flex items-center text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">
@@ -230,7 +234,7 @@ export const BookingFlow: React.FC = () => {
                   ))}
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-xs">Total</span>
-                    <span className="font-black text-indigo-600 dark:text-indigo-400 text-2xl">${selectedService?.price}</span>
+                    <span className="font-black text-indigo-600 dark:text-indigo-400 text-2xl">₹{selectedService?.price}</span>
                   </div>
                 </div>
               </div>

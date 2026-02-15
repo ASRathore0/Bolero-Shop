@@ -43,6 +43,7 @@ export interface Booking {
   status: BookingStatus;
   totalPrice: number;
   createdAt: string;
+  rating?: number; // Customer rating (1-5)
 }
 
 export interface TimeSlot {
