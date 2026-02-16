@@ -24,7 +24,7 @@ export const LandingPage: React.FC<{ onBookNow: () => void }> = ({ onBookNow }) 
           <img 
             src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=2074" 
             className="w-full h-full object-cover brightness-[0.3]"
-            alt="BarberFlow Experience" 
+            alt="Yours Beauty Experience" 
           />
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/80"></div>
         </div>
@@ -218,13 +218,13 @@ export const LandingPage: React.FC<{ onBookNow: () => void }> = ({ onBookNow }) 
           
           <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 border-t border-white/20 pt-16">
             <div className="flex items-center justify-center gap-3 text-white/90 font-bold text-sm">
-              <MapPin size={20} className="text-white/60" /> Central Plaza, Studio 12
+              <MapPin size={20} className="text-white/60" /> Sareen Farm, Police Line, EcoTech-lll Greater Noida.
             </div>
             <div className="flex items-center justify-center gap-3 text-white/90 font-bold text-sm">
-              <Phone size={20} className="text-white/60" /> +91 (555) 000-0000
+              <Phone size={20} className="text-white/60" /> +91 7837861533
             </div>
             <div className="flex items-center justify-center gap-3 text-white/90 font-bold text-sm cursor-pointer hover:text-white">
-              <Instagram size={20} className="text-white/60" /> @BarberFlowStudio
+              <Instagram size={20} className="text-white/60" /> @YoursBeautySaloon
             </div>
           </div>
         </div>

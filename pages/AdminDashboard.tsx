@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext.tsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { Settings, Users, Scissors, DollarSign, TrendingUp, Download, Star, Plus, X, Zap, Droplets, Wind, User, Clock, Trash2, UserPlus, Image as ImageIcon, Upload, Camera } from 'lucide-react';
+import { Settings, Users, Scissors, DollarSign, TrendingUp, Download, Star, Plus, X, Zap, Droplets, Wind, User, Clock, Trash2, UserPlus, Image as ImageIcon, Upload, Camera, Check } from 'lucide-react';
 import { ICON_MAP } from '../constants.tsx';
 
 const COLORS = ['#4f46e5', '#6366f1', '#818cf8', '#a5b4fc'];
@@ -11,6 +11,7 @@ export const AdminDashboard: React.FC = () => {
   const { barbers, services, bookings, theme, addService, deleteService, addBarber, deleteBarber, gallery, addToGallery, removeFromGallery } = useApp();
   const [modalType, setModalType] = useState<'none' | 'service' | 'barber' | 'gallery'>('none');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
   
   const [newService, setNewService] = useState({
     name: '',
@@ -59,6 +60,17 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleGalleryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewGalleryUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleGallerySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newGalleryUrl) {
@@ -73,7 +85,7 @@ export const AdminDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 font-playfair tracking-tight">Salon Operations</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Global management for BarberFlow Central</p>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Global management for Yours Beauty Unisex Saloon</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button 
@@ -223,10 +235,64 @@ export const AdminDashboard: React.FC = () => {
             <form onSubmit={handleGallerySubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Image URL (Direct link)</label>
-                <input required autoFocus type="url" placeholder="https://your-image-url.jpg" value={newGalleryUrl} onChange={e => setNewGalleryUrl(e.target.value)} className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white text-sm" />
-                <p className="text-[10px] text-slate-500 font-medium">Use professional photos of your marble styling stations, gold accents, and halo mirrors.</p>
+                <input 
+                  autoFocus 
+                  type="url" 
+                  placeholder="https://your-image-url.jpg" 
+                  value={newGalleryUrl.startsWith('data:') ? '' : newGalleryUrl} 
+                  onChange={e => setNewGalleryUrl(e.target.value)} 
+                  disabled={newGalleryUrl.startsWith('data:')}
+                  className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white text-sm disabled:opacity-50" 
+                />
+                {newGalleryUrl.startsWith('data:') && (
+                  <div className="flex items-center gap-2 text-xs font-bold text-green-500 mt-2">
+                    <Check size={14} /> 
+                    <span>Image Selected from Device</span>
+                    <button 
+                      type="button" 
+                      onClick={() => { setNewGalleryUrl(''); if (galleryFileInputRef.current) galleryFileInputRef.current.value = ''; }}
+                      className="ml-auto text-slate-400 hover:text-rose-500 underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
-              <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition">Update Portfolio</button>
+
+              <div className="relative flex items-center py-2">
+                <div className="flex-grow border-t border-slate-100 dark:border-slate-800"></div>
+                <span className="flex-shrink-0 mx-4 text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">OR</span>
+                <div className="flex-grow border-t border-slate-100 dark:border-slate-800"></div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Upload from Device</label>
+                <div 
+                  onClick={() => galleryFileInputRef.current?.click()}
+                  className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition group"
+                >
+                  {newGalleryUrl.startsWith('data:') ? (
+                    <img src={newGalleryUrl} alt="Preview" className="h-32 object-contain rounded-lg mb-2 shadow-sm" />
+                  ) : (
+                    <Upload className="text-slate-300 group-hover:text-indigo-500 mb-2 transition-colors" size={32} />
+                  )}
+                  <span className="text-xs font-bold text-slate-500 group-hover:text-indigo-500 transition-colors">
+                    {newGalleryUrl.startsWith('data:') ? 'Change Photo' : 'Click to Upload'}
+                  </span>
+                </div>
+                <input 
+                  type="file" 
+                  ref={galleryFileInputRef}
+                  onChange={handleGalleryImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
+
+              <div className="pt-2">
+                 <p className="text-[10px] text-slate-400 font-medium mb-4">Use professional photos of your marble styling stations, gold accents, and halo mirrors.</p>
+                 <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/20 active:scale-[0.98]">Update Portfolio</button>
+              </div>
             </form>
           </div>
         </div>

@@ -62,12 +62,19 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-indigo-600 rounded-lg text-white">
-                <Scissors size={20} className="sm:w-6 sm:h-6" />
+          <div className="flex justify-between h-20 items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-600/20">
+                <Scissors size={24} className="sm:w-6 sm:h-6" />
               </div>
-              <span className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">BarberFlow</span>
+              <div className="flex flex-col">
+                <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none font-playfair">
+                  Yours Beauty
+                </span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">
+                  Makeup Studio & Unisex Saloon
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -167,12 +174,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="sm:col-span-2">
-              <div className="flex items-center space-x-2 mb-4">
-                <Scissors className="text-indigo-600" size={20} />
-                <span className="text-lg font-bold dark:text-white">BarberFlow</span>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-indigo-600 rounded-lg text-white">
+                   <Scissors size={20} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight font-playfair leading-none">Yours Beauty</span>
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Makeup Studio & Unisex Saloon</span>
+                </div>
               </div>
               <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm leading-relaxed">
-                Elevate your grooming experience with the city's finest barbers. 
+                Elevate your grooming experience with the city's finest artists. 
                 Modern style meets traditional craftsmanship.
               </p>
             </div>
@@ -180,7 +192,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <h4 className="font-bold mb-4 text-slate-900 dark:text-white text-sm uppercase tracking-widest">Salon</h4>
               <ul className="space-y-2 text-slate-500 dark:text-slate-400 text-sm font-medium">
                 <li><a href="#" className="hover:text-indigo-600 transition">Our Services</a></li>
-                <li><a href="#" className="hover:text-indigo-600 transition">Master Barbers</a></li>
+                <li><a href="#" className="hover:text-indigo-600 transition">Master Artists</a></li>
                 <li><a href="#" className="hover:text-indigo-600 transition">User Reviews</a></li>
               </ul>
             </div>
@@ -194,7 +206,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             </div>
           </div>
           <div className="mt-8 sm:mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-            © 2024 BarberFlow. Designed for Excellence.
+            © 2024 Yours Beauty. Designed for Excellence.
           </div>
         </div>
       </footer>

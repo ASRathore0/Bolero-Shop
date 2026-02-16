@@ -141,7 +141,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       mockUser = {
         id: 'admin-1',
         name: 'Salon Owner',
-        email: 'admin@barberflow.com',
+        email: 'admin@yoursbeauty.com',
         role: UserRole.ADMIN,
         avatar: 'https://picsum.photos/seed/admin/200'
       };

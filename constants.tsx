@@ -50,7 +50,7 @@ export const BARBERS: UserType[] = [
   {
     id: 'b1',
     name: 'Marco Rossi',
-    email: 'marco@barberflow.com',
+    email: 'marco@yoursbeauty.com',
     role: UserRole.BARBER,
     avatar: 'https://picsum.photos/seed/marco/200',
     rating: 4.9,
@@ -60,7 +60,7 @@ export const BARBERS: UserType[] = [
   {
     id: 'b2',
     name: 'Sasha Vance',
-    email: 'sasha@barberflow.com',
+    email: 'sasha@yoursbeauty.com',
     role: UserRole.BARBER,
     avatar: 'https://picsum.photos/seed/sasha/200',
     rating: 4.8,
@@ -70,7 +70,7 @@ export const BARBERS: UserType[] = [
   {
     id: 'b3',
     name: 'James Dean',
-    email: 'james@barberflow.com',
+    email: 'james@yoursbeauty.com',
     role: UserRole.BARBER,
     avatar: 'https://picsum.photos/seed/james/200',
     rating: 4.7,
